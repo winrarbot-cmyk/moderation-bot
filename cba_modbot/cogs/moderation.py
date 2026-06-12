@@ -1,8 +1,6 @@
 """
 Cog: Moderation
-General moderation helpers and background tasks:
-- Automatic expiry of queue bans (restores channel access)
-- Automatic expiry of warnings
+Handles automatic expiry systems for punishments
 """
 
 from __future__ import annotations
@@ -14,10 +12,6 @@ import discord
 from discord.ext import commands, tasks
 
 from config.settings import CONFIG
-from utils.helpers import (
-    COLOUR_INFO, COLOUR_SUCCESS, COLOUR_ERROR,
-    staff_only, base_embed,
-)
 
 log = logging.getLogger("cba_bot.moderation")
 
@@ -34,41 +28,47 @@ class Moderation(commands.Cog):
     def db(self):
         return self.bot.db
 
-    # ── Background: expire queue bans & restore access ────────────────────────
+    # ── Background task ────────────────────────────────────────────────
     @tasks.loop(minutes=5)
     async def expiry_loop(self):
-        """Every 5 minutes, check for expired queue bans and restore access."""
         now = datetime.now(timezone.utc)
 
-        # Fetch all active bans across all guilds
+        # ─────────────────────────────────────────────
+        # 1. EXPIRE QUEUE BANS
+        # ─────────────────────────────────────────────
         cursor = self.db.queue_bans.find({
             "active": True,
-            "expires_at": {"$lte": now, "$ne": None},
+            "expires_at": {"$ne": None, "$lte": now},
         })
+
         expired_bans = await cursor.to_list(length=None)
 
         for ban in expired_bans:
             guild = self.bot.get_guild(ban["guild_id"])
             if not guild:
                 continue
-            member = guild.get_member(ban["user_id"])
-            if member:
-                for ch_name in CONFIG["channels"]["queue_channels"]:
-                    channel = discord.utils.get(guild.channels, name=ch_name)
-                    if channel:
-                        try:
-                            await channel.set_permissions(member, view_channel=None)
-                        except discord.Forbidden:
-                            pass
-                log.info("Queue ban expired – restored access for %s in %s", member, guild.name)
 
-            # Mark as inactive
+            member = guild.get_member(ban["user_id"])
+
+            if member:
+                await self._restore_queue_access(guild, member)
+                log.info(
+                    "Queue ban expired → restored access: %s in %s",
+                    member,
+                    guild.name
+                )
+
             await self.db.queue_bans.update_one(
-                {"_id": ban["_id"]},
-                {"$set": {"active": False, "expired_at": now}},
+                {"case_id": ban["case_id"]},   # FIXED: use case_id instead of _id
+                {"$set": {
+                    "active": False,
+                    "expired_at": now
+                }},
             )
 
-        # Expire old warnings
+        # ─────────────────────────────────────────────
+        # 2. EXPIRE WARNINGS
+        # ─────────────────────────────────────────────
         expired_count = await self.db.expire_old_warnings()
         if expired_count:
             log.info("Expired %d warning(s).", expired_count)
@@ -77,6 +77,15 @@ class Moderation(commands.Cog):
     async def before_expiry(self):
         await self.bot.wait_until_ready()
 
+    # ── Helpers ─────────────────────────────────────────────────────────
+    async def _restore_queue_access(self, guild: discord.Guild, member: discord.Member):
+        for ch_name in CONFIG["channels"]["queue_channels"]:
+            channel = discord.utils.get(guild.channels, name=ch_name)
+            if not channel:
+                continue
 
-async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(Moderation(bot))
+            try:
+                # CLEAN reset instead of overwrite None
+                await channel.set_permissions(member, overwrite=None)
+            except discord.Forbidden:
+                log.warning("Missing permission in #%s", ch_name)
