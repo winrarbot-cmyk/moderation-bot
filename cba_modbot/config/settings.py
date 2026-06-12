@@ -12,9 +12,9 @@ CONFIG: dict = {# ── Bot core ───────────────�
 
 # ── Staff roles (names must match exactly in Discord) ─────────────────────
 "staff_roles": [
-    "ENTER_STAFF_ROLE_1_HERE",   # e.g. your Owner role name
-    "ENTER_STAFF_ROLE_2_HERE",   # e.g. your Admin role name
-    "ENTER_STAFF_ROLE_3_HERE",   # e.g. your Moderator role name
+    "ENTER_STAFF_ROLE_1_HERE",   #  Owner role name
+    "ENTER_STAFF_ROLE_2_HERE",   #  Admin role name
+    "ENTER_STAFF_ROLE_3_HERE",   #  Moderator role name
 ],
 
 # ── Role used for @ping in escalation alerts ──────────────────────────────
