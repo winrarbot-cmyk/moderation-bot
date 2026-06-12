@@ -54,10 +54,7 @@ appeal = await db.create_appeal(
 )
 
 # Post to #appeals channel
-appeals_channel_name = CONFIG["channels"]["appeals"]
-appeals_channel = discord.utils.get(
-    interaction.guild.text_channels, name=appeals_channel_name
-)
+appeals_channel = interaction.guild.get_channel(CONFIG["channels"]["appeals"])
 if appeals_channel:
     embed = _build_appeal_embed(appeal, case, interaction.user)
     view  = AppealActionView(appeal["appeal_id"])
