@@ -300,7 +300,14 @@ await self.db.create_punishment(
     guild_id=guild_id,
 )
 
-async def _remove_queue_access(self, guild: discord.Guild, member: discord.Member) -> None:queue_channel_names = CONFIG["channels"]["queue_channels"]for ch_name in queue_channel_names:channel = discord.utils.get(guild.channels, name=ch_name)if channel:try:await channel.set_permissions(member, view_channel=False)except discord.Forbidden:log.warning("Cannot set permissions in %s", channel.name)
+async def _remove_queue_access(self, guild: discord.Guild, member: discord.Member) -> None:
+    for ch_id in CONFIG["channels"]["queue_channels"]:
+        channel = guild.get_channel(ch_id)
+        if channel:
+            try:
+                await channel.set_permissions(member, view_channel=False)
+            except discord.Forbidden:
+                log.warning("Cannot set permissions in channel ID %s", ch_id)
 
 ── Helper: community warning escalation ──────────────────────────────────
 
@@ -341,7 +348,9 @@ elif p_type == "ban":
 
 ── Helper: escalation alerts ─────────────────────────────────────────────
 
-async def _check_escalation_alerts(self,ctx: commands.Context,member: discord.Member,guild_id: int,reason: str,) -> None:alert_channel_name = CONFIG["channels"]["moderation_alerts"]alert_channel = discord.utils.get(ctx.guild.text_channels, name=alert_channel_name)if not alert_channel:return
+async def _check_escalation_alerts(self,ctx: commands.Context,member: discord.Member,guild_id: int,reason: str,) -> None:
+    alert_channel = ctx.guild.get_channel(CONFIG["channels"]["moderation_alerts"])
+    if not alert_channel:return
 
 for rule in CONFIG["alert_rules"]:
     if rule.get("reason") and rule["reason"] != reason:
@@ -355,8 +364,8 @@ for rule in CONFIG["alert_rules"]:
 
     if count >= rule["count"]:
         # Find @Moderator role
-        mod_role = discord.utils.get(ctx.guild.roles, name=CONFIG["alert_ping_role"])
-        ping = mod_role.mention if mod_role else f"@{CONFIG['alert_ping_role']}"
+        mod_role = ctx.guild.get_role(CONFIG["alert_ping_role_id"])
+        ping = mod_role.mention if mod_role else f"<@&{CONFIG['alert_ping_role_id']}>"
         embed = base_embed(
             "🚨 Escalation Alert",
             f"{ping}\n"
