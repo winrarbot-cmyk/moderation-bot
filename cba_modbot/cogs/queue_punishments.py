@@ -290,8 +290,30 @@ async def unban(self, ctx: commands.Context, user: discord.User, *, reason: str 
 
 ── Internal helpers ──────────────────────────────────────────────────────
 
-async def _remove_queue_access(self, guild: discord.Guild, member: discord.Member) -> int:"""Remove ViewChannel from all configured queue channels. Returns count modified."""count = 0for ch_name in CONFIG["channels"]["queue_channels"]:channel = discord.utils.get(guild.channels, name=ch_name)if channel:try:await channel.set_permissions(member, view_channel=False)count += 1except discord.Forbidden:log.warning("Cannot set permissions in #%s", ch_name)return count
+async def _remove_queue_access(self, guild: discord.Guild, member: discord.Member) -> int:
+    """Remove ViewChannel from all configured queue channels. Returns count modified."""
+    count = 0
+    for ch_id in CONFIG["channels"]["queue_channels"]:
+        channel = guild.get_channel(ch_id)
+        if channel:
+            try:
+                await channel.set_permissions(member, view_channel=False)
+                count += 1
+            except discord.Forbidden:
+                log.warning("Cannot set permissions in channel ID %s", ch_id)
+    return count
 
-async def _restore_queue_access(self, guild: discord.Guild, member: discord.Member) -> int:"""Restore ViewChannel in all configured queue channels. Returns count modified."""count = 0for ch_name in CONFIG["channels"]["queue_channels"]:channel = discord.utils.get(guild.channels, name=ch_name)if channel:try:await channel.set_permissions(member, view_channel=None)  # remove overridecount += 1except discord.Forbidden:log.warning("Cannot restore permissions in #%s", ch_name)return count
+async def _restore_queue_access(self, guild: discord.Guild, member: discord.Member) -> int:
+    """Restore ViewChannel in all configured queue channels. Returns count modified."""
+    count = 0
+    for ch_id in CONFIG["channels"]["queue_channels"]:
+        channel = guild.get_channel(ch_id)
+        if channel:
+            try:
+                await channel.set_permissions(member, view_channel=None)  # remove override
+                count += 1
+            except discord.Forbidden:
+                log.warning("Cannot restore permissions in channel ID %s", ch_id)
+    return count
 
 async def setup(bot: commands.Bot) -> None:await bot.add_cog(QueuePunishments(bot))
