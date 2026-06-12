@@ -10,33 +10,35 @@ CONFIG: dict = {# ── Bot core ───────────────�
 "mongodb_uri": os.getenv("MONGODB_URI", "mongodb://localhost:27017"),
 "mongodb_db": os.getenv("MONGODB_DB", "cba_modbot"),
 
-# ── Staff roles (names must match exactly in Discord) ─────────────────────
-"staff_roles": [
-    "ENTER_STAFF_ROLE_1_HERE",   #  Owner role name
-    "ENTER_STAFF_ROLE_2_HERE",   #  Admin role name
-    "ENTER_STAFF_ROLE_3_HERE",   #  Moderator role name
+# ── Staff role IDs ────────────────────────────────────────────────────────
+# Right-click a role in Discord → Copy Role ID (Developer Mode must be on)
+"staff_role_ids": [
+    000000000000000001,   # Owner role ID
+    000000000000000002,   # Admin role ID
+    000000000000000003,   # Moderator role ID
 ],
 
-# ── Role used for @ping in escalation alerts ──────────────────────────────
-"alert_ping_role": "ENTER_ALERT_PING_ROLE_HERE",  # role name to ping in #moderation-alerts
+# ── Role ID used for @ping in escalation alerts ───────────────────────────
+"alert_ping_role_id": 000000000000000004,  # role ID to ping in #moderation-alerts
 
-# ── Channels ──────────────────────────────────────────────────────────────
+# ── Channel IDs ───────────────────────────────────────────────────────────
+# Right-click a channel in Discord → Copy Channel ID (Developer Mode must be on)
 "channels": {
     # Channel where /report embeds are posted
-    "reports": "ENTER_REPORTS_CHANNEL_HERE",
+    "reports": 000000000000000010,
     # Channel where !appeal embeds are posted
-    "appeals": "ENTER_APPEALS_CHANNEL_HERE",
+    "appeals": 000000000000000011,
     # Channel where escalation alerts are posted
-    "moderation_alerts": "ENTER_MODERATION_ALERTS_CHANNEL_HERE",
-    # All queue-related channels – ViewChannel is removed when a queue ban is issued
+    "moderation_alerts": 000000000000000012,
+    # All queue-related channel IDs – ViewChannel is removed when a queue ban is issued
     "queue_channels": [
-        "premier-queue",
-        "division-1-queue",
-        "academy-queue",
-        "division-2-queue",
-        "division-3-queue",
-        "open-queue",
-        "2v2-queue",
+        000000000000000020,  # premier-queue
+        000000000000000021,  # division-1-queue
+        000000000000000022,  # academy-queue
+        000000000000000023,  # division-2-queue
+        000000000000000024,  # division-3-queue
+        000000000000000025,  # open-queue
+        000000000000000026,  # 2v2-queue
     ],
 },
 
